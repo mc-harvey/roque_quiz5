@@ -9,7 +9,7 @@ from django.urls import reverse_lazy, reverse
 from django.db import transaction
 from django.contrib.auth import get_user_model
 from django import forms
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 import random
 import json
 
@@ -20,10 +20,6 @@ from .models import (
 )
 
 User = get_user_model()
-
-
-
-
 
 class DashboardView(LoginRequiredMixin, ListView):
     template_name = 'exam/dashboard.html'
@@ -192,6 +188,8 @@ class StudentDashboardView(LoginRequiredMixin, ListView):
         ).count()
         
         context['total_exams'] = base_queryset.count()
+
+
         
         # Add exam status information for each exam in the current page
         exams_with_status = []
@@ -211,7 +209,7 @@ class StudentDashboardView(LoginRequiredMixin, ListView):
             })
         
         context['exams_with_status'] = exams_with_status
-        
+
         return context
 
 
@@ -220,9 +218,12 @@ class ExamCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     form_class = ExamForm
     template_name = 'exam/create_exam.html'
 
+    def test_func(self):
+        return self.request.user.is_teacher
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Add student count information for better user experience
+        # AddS student count information for better user experience
         total_students = User.objects.filter(user_type='student').count()
         context['total_students'] = total_students
         
@@ -831,3 +832,13 @@ class ExamResultView(LoginRequiredMixin, UserPassesTestMixin, DetailView):
     def handle_no_permission(self):
         messages.error(self.request, 'Access denied.')
         return redirect('exam:dashboard')
+
+def debug_timezone_view(request):
+    import datetime
+    from django.utils import timezone
+    now_utc = timezone.now()
+    now_naive = datetime.datetime.now()
+    return HttpResponse(
+        f"Timezone-aware now: {now_utc}<br/>Naive now: {now_naive}"
+    )
+

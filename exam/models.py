@@ -64,13 +64,15 @@ class Exam(models.Model):
                 raise ValidationError('Start date must be before end date.')
     
     def is_active_now(self):
-        now = timezone.now()
+        now = timezone.localtime()
         return self.is_active and self.start_date_time <= now <= self.end_date_time
     
     def is_upcoming(self):
+        now = timezone.localtime()
         return timezone.now() < self.start_date_time
     
     def is_expired(self):
+        now = timezone.localtime()
         return timezone.now() > self.end_date_time
     
     def can_student_access(self, student):
@@ -109,7 +111,7 @@ class Exam(models.Model):
     
     def get_status_for_student(self, student):
         """Get exam status specifically for a student."""
-        now = timezone.now()
+        now = timezone.localtime()
         
         # Check if exam window is open
         if now < self.start_date_time:

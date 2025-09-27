@@ -42,6 +42,8 @@ class CustomLoginView(LoginView):
 
 
 class CustomLogoutView(RedirectView):
+    def get_redirect_url(self, *args, **kwargs):
+        return '/auth/signin/'
     
     def get(self, request, *args, **kwargs):
         if request.user.is_authenticated:
@@ -170,7 +172,8 @@ class TeacherProfileView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
                 passed_count = failed_count = 0
                 pass_rate = avg_score = avg_time_minutes = time_efficiency = 0
                 question_difficulty = []
-            
+                allocated_time_minutes = exam.duration_minutes or 0
+
             exam_analytics.append({
                 'exam': exam,
                 'total_attempts': total_attempts,
@@ -211,6 +214,8 @@ class StudentProfileView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
             student=student,
             is_completed=True
         ).select_related('exam').order_by('-submitted_at')
+
+        total_exams_taken = all_submissions.count()
         
         # Calculate average score
         if total_exams_taken > 0:
@@ -247,6 +252,7 @@ class StudentProfileView(LoginRequiredMixin, UserPassesTestMixin, TemplateView):
         context.update({
             'student': student,
             'avg_score': avg_score,
+            'total_exams_taken': total_exams_taken,
             'recent_submissions': recent_submissions,
             'exam_performance': exam_performance,
             'grade_ranges': grade_ranges,
